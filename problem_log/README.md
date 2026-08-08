@@ -556,6 +556,58 @@ fuser -vk /dev/nvidia5  # Lists and asks for confirmation
 fuser -vkM /dev/nvidia5 # Kills with SIGKILL (-9)
 ```
 
+### if simple solution doesn't work
+
+ When `nvidia-smi` shows GPU memory usage but no corresponding process, find candidate processes that still have the affected GPU devices open:
+
+```bash
+find /proc/[0-9]*/fd \
+  -lname '/dev/nvidia[4-7]' \
+  -printf '%p\n' 2>/dev/null |
+cut -d/ -f3 |
+sort -nu
+```
+
+For each candidate PID, inspect its parent PID and process-group ID:
+
+```bash
+ps -ww -o user,pid,ppid,pgid,sid,stat,etime,cmd -p <PID>
+```
+
+For example:
+
+```text
+PID      PPID    PGID
+4067519     1 4140189
+```
+
+`PPID=1` means the original launcher has exited and the process is now orphaned. The important value is the `PGID`.
+
+Before killing anything, list all processes in that process group:
+
+```bash
+PGID=$(ps -o pgid= -p <PID> | tr -d ' ')
+
+ps -eo user,pid,ppid,pgid,sid,stat,etime,cmd |
+awk -v pgid="$PGID" '$4 == pgid'
+```
+
+Confirm that the group does not contain any jobs that should remain running. Then terminate the entire process group:
+
+```bash
+kill -TERM -- "-$PGID"
+sleep 5
+kill -KILL -- "-$PGID" 2>/dev/null
+```
+
+Finally, verify that the GPU memory has been released:
+
+```bash
+nvidia-smi
+```
+
+In the observed case, killing only the individual orphan PID did not release the memory, but killing its complete process group did.
+
 ---
 
 ## <span style="color:green"> 24-10-03 Lightning unable to import </span>
@@ -697,8 +749,54 @@ Windows: 设置 - 时间和语言 - 语言和区域 - 选项 -微软拼音 - 词
 
 ---
 
+#  <span style="color:blue"> Network </span>
+
+---
+
+## <span style="color:green"> 26-06-25 Codex Cli cannot login in VSCODE </span>
+
+### Discussion
+
+One of the error is: "Codex login/Sign-in could not be completed Token exchange failed:". 
+
+If WSL or local vscode, follow https://community.openai.com/t/codex-login-sign-in-could-not-be-completed-token-exchange-failed/1376953.
+For remote server, when signing in VSCODE use the device side version `codex login --device-auth`.
+
+
+
+## <span style="color:green"> 26-06-22 ssh don't go through VPN </span>
+
+### Discussion
+
+For some VPN software the ssh command does not by pass it, can set in the windows ~/.ssh/config to let the ssh use that port when VPN is on. Eg
+
+```
+Host my-server
+    HostName xxx
+    User xxx
+    Port 22
+    ProxyCommand "C:/Program Files/Git/mingw64/bin/connect.exe" -S 127.0.0.1:10808 %h %p
+```
+
+Where 10808 is the listening port of that VPN software.
+
+---
+
 
 #  <span style="color:blue"> Other tools and packages </span>
+
+---
+
+## <span style="color:green"> 26-07-18 Paper plotting with MS PowerPoint </span>
+
+1. save images as .svg if possible
+2. Adobe acrobat can store pdf as pptx file
+
+### ref
+
+`https://stackoverflow.com/questions/62613523/how-to-change-vscode-server-directory`  
+or  
+`https://forum.cursor.com/t/change-default-location-of-cursor-server/2065/4`
 
 ---
 

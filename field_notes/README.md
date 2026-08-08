@@ -16,7 +16,7 @@
 1. [Explainable AI](https://zhuanlan.zhihu.com/p/1941219884651517087)
 1. [Knowledge distillation](https://zhuanlan.zhihu.com/p/1925976818923598593)
 1. [Parameter and Complexity for AI modules](https://zhuanlan.zhihu.com/p/1951426723196437031)
-1. [Continual Learning](https://zhuanlan.zhihu.com/p/2009300477733523952)
+1. [Continual Learning](https://zhuanlan.zhihu.com/p/2040087451004318779)
 
 # DL general models
 1. [CNN](https://zhuanlan.zhihu.com/p/1913325083327459352)
